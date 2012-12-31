@@ -39,7 +39,7 @@ for link in soup.find_all('a'):
         
         conn = sqlite3.connect("myHackerNews.db")
         cursor = conn.cursor()
-        cursor.execute('INSERT INTO HackerNews VALUES (?,?)', (link_url, contents))
+        cursor.execute('INSERT INTO HackerNews VALUES (?,?)', (link.get('href'), link.contents[0]))
         conn.close()
 
 print "Database updated!"
