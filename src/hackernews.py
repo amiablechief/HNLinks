@@ -1,7 +1,6 @@
 import sqlite3
 import urllib2
 from datetime import datetime
-from unidecode import unidecode
 from bs4 import BeautifulSoup
 
 # Goal of the program - retrieve HackerNews links and store them within a Database
@@ -15,7 +14,7 @@ debug = False
 recordCount = 0
 time_stamp = str(datetime.now())
 
-def check_duplicate(linkUrl):
+def IsDuplicateLink(linkUrl):
     #check linkUrl against the existing set - if it exactly matches, then skip DB insertion
     print "Checking ", linkUrl, "\n"
     linkUrl = linkUrl.strip()
@@ -24,28 +23,28 @@ def check_duplicate(linkUrl):
     for newsItem in hackerNewsItems:
         if linkUrl == newsItem[1]:
             print "[Skipping Duplicate] : ", linkUrl
-            return False
+            return True #A duplicate is found, so don't insert in DB
         else:
-            return True
+            return False #No duplicate, proceed inserting into DB
 
-# Create the database only if one does not exist
+# Create the database and table only if they don't exist
 try:
-    with open("myhackernews2.db") as f:
+    with open("hndb.db") as f:
         pass
         print "Database exists, skipping creation..."
 except IOError as e:
     # 2. Create the database and DB table
     print """Database does not exist. Creating..."""
-    conn = sqlite3.connect("myhackernews2.db")
+    conn = sqlite3.connect("hndb.db")
     cursor = conn.cursor()
     cursor.execute ("""CREATE TABLE IF NOT EXISTS HackerNews (timestamp text, link text, description text)
                         """)
     conn.commit()
     cursor.close()
-    print "Database 'myhackernews2.db' created. Table 'HackerNews' created."
+    print "Database 'hndb.db' created. Table 'HackerNews' created."
 
 # 3. Parse all the 'a' tags and pull out the tag text description and 'a href' attributes for those 'a' tags
-conn = sqlite3.connect("myhackernews2.db")
+conn = sqlite3.connect("hndb.db")
 cursor = conn.cursor()
 for link in soup.find_all('a'):
     if link.find_parents("td", attrs={"class" : "title"}):
@@ -56,15 +55,17 @@ for link in soup.find_all('a'):
         # 4. Push those links and descriptions into a database
         raw_link = link.get('href').strip()
         link_url = unicode(raw_link)
-        contents = unidecode(link.contents[0]).strip()
+        contents = unicode(link.contents[0]).strip()
         
         if not debug:   #insert into database only if not debug mode
             if not contents.lower() == "more":  # Don't include the paging links --> 'more'
-                if check_duplicate(link_url):   # Don't include duplicates
+                if not IsDuplicateLink(link_url):   # Don't include duplicates
+                    print "Begin inserting..."
                     cursor.execute('INSERT INTO HackerNews VALUES (?,?,?)', (time_stamp, link_url, contents))
                     print "Inserted ", contents, "..."
                     recordCount = recordCount + 1
 
-print "Inserted a total of ", recordCount, " HackerNews URLs."
+print "Inserted a total of ", recordCount, " HackerNews URLs." #Status message with number of records inserted
+#Database cleanups
 conn.commit()
 cursor.close()
