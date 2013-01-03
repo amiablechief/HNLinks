@@ -53,6 +53,7 @@ for link in soup.find_all('a'):
         # TODO!
         
         # 4. Push those links and descriptions into a database
+        timestamp = str(datetime.now())
         raw_link = link.get('href').strip()
         link_url = unicode(raw_link)
         contents = unicode(link.contents[0]).strip()
@@ -61,7 +62,7 @@ for link in soup.find_all('a'):
             if not contents.lower() == "more":  # Don't include the paging links --> 'more'
                 if not IsDuplicateLink(link_url):   # Don't include duplicates
                     print "Begin inserting..."
-                    cursor.execute('INSERT INTO HackerNews VALUES (?,?,?)', (time_stamp, link_url, contents))
+                    cursor.execute('INSERT INTO HackerNews VALUES (?,?,?)', (timestamp, link_url, contents))
                     print "Inserted ", contents, "..."
                     recordCount = recordCount + 1
 
