@@ -72,8 +72,8 @@ for page in range(0,10,1): #fetch 10 pages, 0 through 9, 1 page at a time
             # 4. Push those links and descriptions into a database
             timestamp = str(datetime.now())
             raw_link = link.get('href').strip()
-            link_url = unicode(raw_link)
-            contents = unicode(link.contents[0]).strip()
+            link_url = unidecode(raw_link)
+            contents = unidecode((link.contents[0]).strip())
             
             if not debug:   #insert into database only if not debug mode
                 if contents.lower() == "more":  # Don't include the paging links --> 'more'
