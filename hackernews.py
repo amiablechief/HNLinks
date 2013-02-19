@@ -6,7 +6,6 @@ import feedparser
 from datetime import datetime
 from bs4 import BeautifulSoup
 from unidecode import unidecode
-from smtpd import program
 
 # Goal of the program - 
 # Retrieve HackerNews links and store them within a Database
@@ -17,7 +16,8 @@ recordCount = 0
 hn_rss_url = "http://news.ycombinator.com/bigrss"
 
 #Capture arguments
-parser = argparse.ArgumentParser(description='Determine how to fetch the latest HackerNews Links')
+parser = argparse.ArgumentParser(description="""Determine how to fetch the latest HackerNews Links. 
+Updated links (since the last time the program was executed) will be inserted into a SQLite database.""")
 action = parser.add_mutually_exclusive_group(required=True)
 action.add_argument('-r', '--rss', 
                     action='store_true', 
@@ -25,7 +25,7 @@ action.add_argument('-r', '--rss',
                     dest='rss')
 action.add_argument('-s', '--scrape',  
                     action='store_true', 
-                    help="Use screen scraping - USE WITH CAUTION", 
+                    help="Use screen scraping - USE WITH CAUTION!!!", 
                     dest='scrape')
 action.add_argument('-v', '--version', 
                     action='store_true', 
@@ -34,11 +34,6 @@ action.add_argument('-v', '--version',
                     default='v 1.0')
 #We have our arguments
 HNLinksOptions = parser.parse_args()
-
-#print 'You selected the following options = \n'
-#print 'Fetch using RSS : ', programOptions.rss
-#print 'Fetch using SCRAPE : ', programOptions.scrape
-#print 'VERSION : ', programOptions.version
 
 # Helper Functions
 def check_create_database():
@@ -53,7 +48,7 @@ def check_create_database():
         conn = sqlite3.connect("hndb.db")
         cursor = conn.cursor()
         cursor.execute ("""CREATE TABLE IF NOT EXISTS HackerNews 
-                            (timestamp text, link text, description text)
+                            ( text, link text, description text)
                             """)
         conn.commit()
         cursor.close()
@@ -77,12 +72,43 @@ def is_duplicate_link(linkUrl):
 
 if __name__ == '__main__':
     if not debug:
-        
-        # If the user has opted to use screen scraping 
+        # Create the database and tables if required
+        check_create_database()
+
+        #If the user has opted for the RSS version
+        if HNLinksOptions.rss:
+            print "\n\nUsing RSS mode...\n"
+
+            #Get the RSS feed
+            feed = feedparser.parse(hn_rss_url)
+            #Open DB for business            
+            conn = sqlite3.connect("hndb.db")
+            cursor = conn.cursor()
+                        
+            print "Checking ", len(feed['entries']), " links..." 
+            
+            #How many total items are we iterating over
+            for item in range(len(feed['entries'])):
+                if not is_duplicate_link(feed.entries[item]['link']):
+                    print "Begin inserting..."
+                    timestamp = str(datetime.now())
+                    link_url = feed.entries[item]['link']
+                    contents = unidecode(feed.entries[item]['title'])
+                    cursor.execute('INSERT INTO HackerNews VALUES (?,?,?)', 
+                                   (timestamp, link_url, contents))
+                    print "Inserted ", contents, "..."
+                    recordCount = recordCount + 1
+
+            #Database connection cleanups
+            conn.commit()
+            cursor.close()
+                
+            #Help the user with the count of unique records inserted
+            print "Inserted a total of ", recordCount, " HackerNews URLs."
+
+        # If the user has opted to use Screen Scraping (unwise)
         if HNLinksOptions.scrape:
             print "\n\nUsing screen scraping mode...\n"
-            # Create the database and tables if required
-            check_create_database()
             
             # Global variables
             base_url = "http://news.ycombinator.com/"
@@ -131,29 +157,17 @@ if __name__ == '__main__':
                 conn.commit()
                 cursor.close()
                 
-            #Status message with number of records inserted
+            #Help the user with the count of unique records inserted
             print "Inserted a total of ", recordCount, " HackerNews URLs."
 
-    else:
-        if HNLinksOptions.rss:
-            print "\n\nUsing RSS mode...\n"
-            
-            feed = feedparser.parse(hn_rss_url)
-            
-            # Create the database and tables if required
-            # check_create_database()
-            #TODO fetch RSS
-            print "TODO : RSS parsing not yet implemented"
-            #Status message with number of records inserted
-            print "Inserted a total of ", recordCount, " HackerNews URLs."
-
-    if HNLinksOptions.version:
-        print """
-            ************************************
-            Thanks for using HNLink version 1.0!
-            ************************************
-            
-            """
+        #Display version information
+        if HNLinksOptions.version:
+            print """
+                *************************************
+                Thanks for using HNLinks version 1.0!
+                *************************************
+                
+                """
 
 else:
     print "\n\nWARNING! Running in debug mode, no action performed"
