@@ -1,6 +1,6 @@
 #Readme
 
-##HNLinks - Waht is it? What does it do?
+##HNLinks - What is it? What does it do?
 
 The goal of this project is very simple - get every single link on HackerNews into a 'private' SQLite database. 
 
