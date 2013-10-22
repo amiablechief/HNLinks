@@ -58,7 +58,7 @@ def is_duplicate_link(linkUrl):
     """ Check linkUrl against the existing set - if it exactly matches, 
     then skip DB insertion. """
     print "Checking ", linkUrl, "\n"
-    linkUrl = linkUrl.strip()
+    linkUrl = linkUrl.encode('utf-8').strip()
     cursor.execute("SELECT * FROM HackerNews WHERE link=?", [linkUrl])
     hackerNewsItems = cursor.fetchall()
     for newsItem in hackerNewsItems:
