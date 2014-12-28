@@ -93,7 +93,6 @@ if __name__ == '__main__':
                     print "Begin inserting..."
                     timestamp = str(datetime.now())
                     link_url = feed.entries[item]['link']
-                    print "%% " + link_url + " %%"
                     contents = unidecode(feed.entries[item]['title'])
                     cursor.execute('INSERT INTO HackerNews VALUES (?,?,?)',
                                    (timestamp, link_url, contents))
