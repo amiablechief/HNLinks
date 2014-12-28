@@ -7,7 +7,7 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 from unidecode import unidecode
 
-# Goal of the program - 
+# Goal of the program -
 # Retrieve HackerNews links and store them within a Database
 
 #Global Vars
@@ -16,21 +16,21 @@ recordCount = 0
 hn_rss_url = "http://news.ycombinator.com/bigrss"
 
 #Capture arguments
-parser = argparse.ArgumentParser(description="""Determine how to fetch the latest HackerNews Links. 
+parser = argparse.ArgumentParser(description="""Determine how to fetch the latest HackerNews Links.
 Updated links (since the last time the program was executed) will be inserted into a SQLite database.""")
 action = parser.add_mutually_exclusive_group(required=True)
-action.add_argument('-r', '--rss', 
-                    action='store_true', 
-                    help="Download the latest HackerNews links via RSS", 
+action.add_argument('-r', '--rss',
+                    action='store_true',
+                    help="Download the latest HackerNews links via RSS",
                     dest='rss')
-action.add_argument('-s', '--scrape',  
-                    action='store_true', 
-                    help="Use screen scraping - USE WITH CAUTION!!!", 
+action.add_argument('-s', '--scrape',
+                    action='store_true',
+                    help="Use screen scraping - USE WITH CAUTION!!!",
                     dest='scrape')
-action.add_argument('-v', '--version', 
-                    action='store_true', 
-                    help="Display version information and exit", 
-                    dest='version', 
+action.add_argument('-v', '--version',
+                    action='store_true',
+                    help="Display version information and exit",
+                    dest='version',
                     default='v 1.0')
 #We have our arguments
 HNLinksOptions = parser.parse_args()
@@ -47,7 +47,7 @@ def check_create_database():
         print """Database does not exist. Creating..."""
         conn = sqlite3.connect("hndb.db")
         cursor = conn.cursor()
-        cursor.execute ("""CREATE TABLE IF NOT EXISTS HackerNews 
+        cursor.execute ("""CREATE TABLE IF NOT EXISTS HackerNews
                             ( text, link text, description text)
                             """)
         conn.commit()
@@ -55,7 +55,7 @@ def check_create_database():
         print "Database 'hndb.db' created. Table 'HackerNews' created."
 
 def is_duplicate_link(linkUrl):
-    """ Check linkUrl against the existing set - if it exactly matches, 
+    """ Check linkUrl against the existing set - if it exactly matches,
     then skip DB insertion. """
     print "Checking ", linkUrl, "\n"
     linkUrl = linkUrl.encode('utf-8').strip()
@@ -81,20 +81,21 @@ if __name__ == '__main__':
 
             #Get the RSS feed
             feed = feedparser.parse(hn_rss_url)
-            #Open DB for business            
+            #Open DB for business
             conn = sqlite3.connect("hndb.db")
             cursor = conn.cursor()
-                        
-            print "Checking ", len(feed['entries']), " links..." 
-            
+
+            print "Checking ", len(feed['entries']), " links..."
+
             #How many total items are we iterating over
             for item in range(len(feed['entries'])):
-                if not is_duplicate_link(feed.entries[item]['link']):
+                if not is_duplicate_link(unidecode(feed.entries[item]['link'])):
                     print "Begin inserting..."
                     timestamp = str(datetime.now())
                     link_url = feed.entries[item]['link']
+                    print "%% " + link_url + " %%"
                     contents = unidecode(feed.entries[item]['title'])
-                    cursor.execute('INSERT INTO HackerNews VALUES (?,?,?)', 
+                    cursor.execute('INSERT INTO HackerNews VALUES (?,?,?)',
                                    (timestamp, link_url, contents))
                     print "Inserted ", contents, "..."
                     recordCount = recordCount + 1
@@ -102,24 +103,24 @@ if __name__ == '__main__':
             #Database connection cleanups
             conn.commit()
             cursor.close()
-                
+
             #Help the user with the count of unique records inserted
             print "Inserted a total of ", recordCount, " HackerNews URLs."
 
         # If the user has opted to use Screen Scraping (unwise)
         if HNLinksOptions.scrape:
             print "\n\nUsing screen scraping mode...\n"
-            
+
             # Global variables
             base_url = "http://news.ycombinator.com/"
             more_links = [] #Define a new list to hold the more pager links
-            
+
             # 1. Pull down the HTML from a file or a web site
             for page in range(10): #fetch 10 pages, 0 through 9, 1 page at a time
                 print "*********************"
                 print "FETCHING PAGE ==> ", page
                 print "*********************\n"
-                
+
                 #Get the appropriate page based on the constructed YC URL
                 if page == 0: # First page, so use the base url
                     soup = BeautifulSoup(urllib2.urlopen(base_url))
@@ -131,8 +132,8 @@ if __name__ == '__main__':
                     else:
                         base_url = base_url + more
                     soup = BeautifulSoup(urllib2.urlopen(base_url))
-               
-                # 2. Parse all the 'a' tags and pull out the tag text description and 
+
+                # 2. Parse all the 'a' tags and pull out the tag text description and
                 # 'a href' attributes for those 'a' tags
                 conn = sqlite3.connect("hndb.db")
                 cursor = conn.cursor()
@@ -143,20 +144,20 @@ if __name__ == '__main__':
                         raw_link = link.get('href').strip()
                         link_url = unidecode(raw_link)
                         contents = unidecode((link.contents[0]).strip())
-        
+
                         if contents.lower() == "more":  # Don't include 'more' links
                             more_links.append(link_url)
                         else:
                             if not is_duplicate_link(link_url):   # ignore duplicates
                                 print "Begin inserting..."
-                                cursor.execute('INSERT INTO HackerNews VALUES (?,?,?)', 
+                                cursor.execute('INSERT INTO HackerNews VALUES (?,?,?)',
                                                (timestamp, link_url, contents))
                                 print "Inserted ", contents, "..."
                                 recordCount = recordCount + 1
                 #Database connection cleanups
                 conn.commit()
                 cursor.close()
-                
+
             #Help the user with the count of unique records inserted
             print "Inserted a total of ", recordCount, " HackerNews URLs."
 
@@ -164,9 +165,10 @@ if __name__ == '__main__':
         if HNLinksOptions.version:
             print """
                 *************************************
-                Thanks for using HNLinks version 1.0!
+                HNLinks v1.0
+                DB last updated """ + str(datetime.now()) + """
                 *************************************
-                
+
                 """
 
 else:
