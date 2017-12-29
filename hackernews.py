@@ -57,13 +57,13 @@ def check_create_database():
 def is_duplicate_link(linkUrl):
     """ Check linkUrl against the existing set - if it exactly matches,
     then skip DB insertion. """
-    print "Checking ", linkUrl, "\n"
+    print "Checking ", linkUrl
     linkUrl = linkUrl.encode('utf-8').strip()
     cursor.execute("SELECT * FROM HackerNews WHERE link=?", [linkUrl])
     hackerNewsItems = cursor.fetchall()
     for newsItem in hackerNewsItems:
         if linkUrl == newsItem[1]:
-            print "[Skipping Duplicate] : ", linkUrl
+            print "[Skipping Duplicate] => ", linkUrl, "\n"
             return True # A duplicate is found
         else:
             return False # No duplicate
@@ -96,7 +96,7 @@ if __name__ == '__main__':
                     contents = unidecode(feed.entries[item]['title'])
                     cursor.execute('INSERT INTO HackerNews VALUES (?,?,?)',
                                    (timestamp, link_url, contents))
-                    print "Inserted ", contents, "..."
+                    print "Inserted ", contents, "...", "\n"
                     recordCount = recordCount + 1
 
             #Database connection cleanups
