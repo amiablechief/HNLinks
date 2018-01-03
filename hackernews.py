@@ -13,6 +13,7 @@ from unidecode import unidecode
 #Global Vars
 debug = False    #If true, DB inserts are prevented
 recordCount = 0
+skippedRecordCount = 0
 hn_rss_url = "http://news.ycombinator.com/bigrss"
 
 #Capture arguments
@@ -55,6 +56,7 @@ def check_create_database():
         print "Database 'hndb.db' created. Table 'HackerNews' created."
 
 def is_duplicate_link(linkUrl):
+    global skippedRecordCount
     """ Check linkUrl against the existing set - if it exactly matches,
     then skip DB insertion. """
     print "Checking ", linkUrl
@@ -64,6 +66,7 @@ def is_duplicate_link(linkUrl):
     for newsItem in hackerNewsItems:
         if linkUrl == newsItem[1]:
             print "[Skipping Duplicate] => ", linkUrl, "\n"
+            skippedRecordCount = skippedRecordCount + 1
             return True # A duplicate is found
         else:
             return False # No duplicate
@@ -104,9 +107,10 @@ if __name__ == '__main__':
             cursor.close()
 
             #Help the user with the count of unique records inserted
-            print "Inserted a total of ", recordCount, " HackerNews URLs."
+            print "Inserted ", recordCount, " entries."
+            print "Skipped  ", skippedRecordCount, "entries."
 
-        # If the user has opted to use Screen Scraping (unwise)
+        # If the user has opted to use Screen Scraping (Deprecated)
         if HNLinksOptions.scrape:
             print "\n\nUsing screen scraping mode...\n"
 
