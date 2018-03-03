@@ -1,6 +1,9 @@
 # Imports
 import sqlite3
-import urllib2
+try:  
+    from urllib2 import urlopen
+except ImportError:  
+    from urllib.request import urlopen
 import argparse
 import feedparser
 from datetime import datetime
@@ -42,10 +45,10 @@ def check_create_database():
     try:
         with open("hndb.db") as f:
             pass
-            print "\nDatabase exists...good!\n"
+            print ("\nDatabase exists...good!\n")
     except IOError as e:
         # 2. Create the database and DB table
-        print """Database does not exist. Creating..."""
+        print ("""Database does not exist. Creating...""")
         conn = sqlite3.connect("hndb.db")
         cursor = conn.cursor()
         cursor.execute ("""CREATE TABLE IF NOT EXISTS HackerNews
@@ -53,19 +56,19 @@ def check_create_database():
                             """)
         conn.commit()
         cursor.close()
-        print "Database 'hndb.db' created. Table 'HackerNews' created."
+        print ("Database 'hndb.db' created. Table 'HackerNews' created.")
 
 def is_duplicate_link(linkUrl):
     global skippedRecordCount
     """ Check linkUrl against the existing set - if it exactly matches,
     then skip DB insertion. """
-    print "Checking ", linkUrl
+    print ("Checking ", linkUrl)
     linkUrl = linkUrl.encode('utf-8').strip()
     cursor.execute("SELECT * FROM HackerNews WHERE link=?", [linkUrl])
     hackerNewsItems = cursor.fetchall()
     for newsItem in hackerNewsItems:
         if linkUrl == newsItem[1]:
-            print "[Skipping Duplicate] => ", linkUrl, "\n"
+            print ("[Skipping Duplicate] => ", linkUrl, "\n")
             skippedRecordCount = skippedRecordCount + 1
             return True # A duplicate is found
         else:
@@ -80,7 +83,7 @@ if __name__ == '__main__':
 
         #If the user has opted for the RSS version
         if HNLinksOptions.rss:
-            print "\n\nUsing RSS mode...\n"
+            print ("\n\nUsing RSS mode...\n")
 
             #Get the RSS feed
             feed = feedparser.parse(hn_rss_url)
@@ -88,18 +91,18 @@ if __name__ == '__main__':
             conn = sqlite3.connect("hndb.db")
             cursor = conn.cursor()
 
-            print "Checking ", len(feed['entries']), " links..."
+            print ("Checking ", len(feed['entries']), " links...")
 
             #How many total items are we iterating over
             for item in range(len(feed['entries'])):
                 if not is_duplicate_link(unidecode(feed.entries[item]['link'])):
-                    print "Begin inserting..."
+                    print ("Begin inserting...")
                     timestamp = str(datetime.now())
                     link_url = feed.entries[item]['link']
                     contents = unidecode(feed.entries[item]['title'])
                     cursor.execute('INSERT INTO HackerNews VALUES (?,?,?)',
                                    (timestamp, link_url, contents))
-                    print "Inserted ", contents, "...", "\n"
+                    print ("Inserted ", contents, "...", "\n")
                     recordCount = recordCount + 1
 
             #Database connection cleanups
@@ -107,12 +110,12 @@ if __name__ == '__main__':
             cursor.close()
 
             #Help the user with the count of unique records inserted
-            print "Inserted ", recordCount, " entries."
-            print "Skipped  ", skippedRecordCount, "entries."
+            print ("Inserted ", recordCount, " entries.")
+            print ("Skipped  ", skippedRecordCount, "entries.")
 
         # If the user has opted to use Screen Scraping (Deprecated)
         if HNLinksOptions.scrape:
-            print "\n\nUsing screen scraping mode...\n"
+            print ("\n\nUsing screen scraping mode...\n")
 
             # Global variables
             base_url = "http://news.ycombinator.com/"
@@ -120,9 +123,9 @@ if __name__ == '__main__':
 
             # 1. Pull down the HTML from a file or a web site
             for page in range(10): #fetch 10 pages, 0 through 9, 1 page at a time
-                print "*********************"
-                print "FETCHING PAGE ==> ", page
-                print "*********************\n"
+                print ("*********************")
+                print ("FETCHING PAGE ==> ", page)
+                print ("*********************\n")
 
                 #Get the appropriate page based on the constructed YC URL
                 if page == 0: # First page, so use the base url
@@ -152,27 +155,21 @@ if __name__ == '__main__':
                             more_links.append(link_url)
                         else:
                             if not is_duplicate_link(link_url):   # ignore duplicates
-                                print "Begin inserting..."
+                                print ("Begin inserting...")
                                 cursor.execute('INSERT INTO HackerNews VALUES (?,?,?)',
                                                (timestamp, link_url, contents))
-                                print "Inserted ", contents, "..."
+                                print ("Inserted ", contents, "...")
                                 recordCount = recordCount + 1
                 #Database connection cleanups
                 conn.commit()
                 cursor.close()
 
             #Help the user with the count of unique records inserted
-            print "Inserted a total of ", recordCount, " HackerNews URLs."
+            print ("Inserted a total of ", recordCount, " HackerNews URLs.")
 
         #Display version information
         if HNLinksOptions.version:
-            print """
-                *************************************
-                HNLinks v1.0
-                DB last updated """ + str(datetime.now()) + """
-                *************************************
-
-                """
+            print ("DB last updated ", str(datetime.now()))
 
 else:
-    print "\n\nWARNING! Running in debug mode, no action performed"
+    print ("\n\nWARNING! Running in debug mode, no action performed")
