@@ -43,10 +43,10 @@ HNLinksOptions = parser.parse_args()
 def check_create_database():
     """ Create the database and table only if required. """
     try:
-        with open("hndb.db") as f:
+        with open("hndb.db"):
             pass
             print ("\nDatabase exists...good!\n")
-    except IOError as e:
+    except IOError:
         # 2. Create the database and DB table
         print ("""Database does not exist. Creating...""")
         conn = sqlite3.connect("hndb.db")
@@ -129,7 +129,7 @@ if __name__ == '__main__':
 
                 #Get the appropriate page based on the constructed YC URL
                 if page == 0: # First page, so use the base url
-                    soup = BeautifulSoup(urllib2.urlopen(base_url))
+                    soup = BeautifulSoup(urlopen(base_url))
                 else: # Use the constructed URL to get correct soup
                     base_url = "http://news.ycombinator.com/" # Reset the base_url
                     more = unidecode(more_links[page-1])
@@ -137,7 +137,7 @@ if __name__ == '__main__':
                         base_url = base_url + more[1:]
                     else:
                         base_url = base_url + more
-                    soup = BeautifulSoup(urllib2.urlopen(base_url))
+                    soup = BeautifulSoup(urlopen(base_url))
 
                 # 2. Parse all the 'a' tags and pull out the tag text description and
                 # 'a href' attributes for those 'a' tags
