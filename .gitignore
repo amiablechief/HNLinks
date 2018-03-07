@@ -27,6 +27,7 @@ hnoffline.html
 *.sql
 *.sqlite
 *.db
+*.db-journal
 
 # Eclipse project related files #
 #################################
