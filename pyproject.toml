@@ -1,0 +1,14 @@
+[project]
+name = "hnlinks"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "argparse>=1.4.0",
+    "bs4>=0.0.2",
+    "datetime>=5.5",
+    "feedparser>=6.0.12",
+    "sqlite4>=0.1.1",
+    "unidecode>=1.4.0",
+    "urllib3>=2.5.0",
+    "urlopen>=1.0.0",
+]
